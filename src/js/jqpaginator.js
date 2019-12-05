@@ -13,36 +13,226 @@
  *   `showInput` Bool has an input to type in.
  *   `numberMargin` Number of numbers to show surrounding active page.
  *   `render` Function to use for rendering data.
- *   `beforePaging` Function to call before requesting data.
- *   `afterPaging` Function to call after requesting data.
+ * 
+ * Options can also be one of the following:
+ * `"destroy"`: Removes paginator and all events
  */
 (function($) {
-    
+    var defaults = {
+        parentcls: 'jqpaginator',
+        wrapcls: 'jqp-wrap',
+        pageListcls: 'jqp-pages',
+        pageItemcls: 'jqp-page',
+        inputcls: 'jqp-input',
+        prevcls: 'jqp-prev',
+        nextcls: 'jqp-next',
+        activecls: 'jqp-active',
+        disabledcls: 'jqp-disable',
+
+        afterPagingEvent: 'after-paging',
+        beforePagingEvent: 'before-paging',
+    };
     var fn = {
         // util
-        bind: function(event, element, func) {
+        bind: function(event, $element, func) {
             // Binding events
-            element.on(event, func);
+            if (!func) return;  // Ignore
+            $element.on(event, func);
         },
-        // ajax related
+        next: function() {
+            // `this` is the next button
+            if (!$(this).hasClass(defaults.disabledcls)) {
+                console.log("Next");
+            }
+        },
+        prev: function() {
+            // `this` is the prev button
+            if (!$(this).hasClass(defaults.disabledcls)) {
+                console.log("Prev");
+            }
+        },
+        calcListNums: function(margin, perPage, total, active) {
+            var l = [1,];  // Always show first
+            // maximum
+            var maxPages = Math.ceil(total / perPage);
+            if (maxPages < 1) maxPages = 1;
+
+            if (maxPages > 1) {
+                var range = [(active - margin), (active + margin)];
+                if (range[0] < 2) range[0] = 2;  // remove < 2, because 1 exists
+                if (range[1] > (maxPages - 1)) range[1] = (maxPages - 1);  // remove > max - 1
+                if (range[0] > 2) l.push("...");  // if first range item is not 2, ellipsis
+                // intermediary numbers
+                var n = range[0];
+                while (n <= range[1]) {
+                    l.push(n);
+                    n++;
+                }
+                if (range[1] < (maxPages - 1)) l.push("...");
+                l.push(maxPages);
+            }
+
+            return l;
+        },
+        // result of data
         done: function(dataArray, total) {
             /**
              * Passed to `data` function, and accepts a 
              * `dataArray` as the data returned from the
              * `data` function, and the number `total` of 
              * total data items.
+             * Triggers "after paging" event.
              */
+            console.log("Done getting data:");
+            console.log(dataArray, total);
         },
         // construction
-        getPageNums: function() {},
-        buildBar: function() {},
+        buildPaginator: function() {
+            // return paginator object - initial setup
+            var $parent = this.parent;
+            var options = this.options;
+            var buttons, buttonTxt;
+            var numbers, numMargin;
+            var input, perPage;
+            // wrapper
+            var $paginator = $("<div><div>");
+            $paginator.addClass(defaults.wrapcls);
+            // buttons
+            if (options.showButtons) {
+                buttonTxt = (options.buttonText) ? options.buttonText : opt.buttonText;
+                buttons = fn.createButtons($parent, buttonTxt);
+            }
+            // numbers
+            if (options.showNumbers) {
+                numMargin = (options.numberMargin) ? options.numberMargin : opt.numberMargin;
+                perPage = (options.itemsPerPage) ? options.itemsPerPage : opt.itemsPerPage;
+                numbers = fn.createNumbers($parent, numMargin, perPage, 1);
+            }
+            // input 
+            if (options.showInput) {
+                input = fn.createInput($parent);
+            }
+
+            // add items to paginator
+            if (buttons) $paginator.append(buttons[0]);
+            if (numbers) $paginator.append(numbers);
+            if (buttons) $paginator.append(buttons[1]);
+            if (input) $paginator.append(input);
+
+            $parent.append($paginator);
+        },
+        createButtons: function($parent, texts) {
+            // return two button elements in array
+            var $prev, $next;
+            // build
+            $prev = $("<div></div>");
+            $prev.addClass(defaults.prevcls);
+            $prev.append("<button>" + texts[0].toString() + "</button>");
+
+            $next = $("<div></div>");
+            $next.addClass(defaults.nextcls);
+            $next.append("<button>" + texts[1].toString() + "</button>");
+
+            // event
+            fn.bind('click', $prev.find("button"), function() { fn.prev($parent); });
+            fn.bind('click', $next.find("button"), function() { fn.next($parent); });
+
+            // return
+            return [$prev, $next];
+        },
+        createNumbers: function($parent, margin, perPage, total, active) {
+            // return the list of numbers
+            if (!active) active = 1;
+            var $numbers = $("<ul></ul>");
+            var numList;
+            $numbers.addClass(defaults.pageListcls);
+
+            numList = fn.calcListNums(margin, perPage, 100, active);
+
+            for (var i=0; i<numList.length; i++) {
+                $numbers.append(
+                    fn.createNumber(numList[i], active)
+                );
+            }
+
+            // event
+            function handler() {
+                var page = Number($(this).text());
+                fn.goto($parent, page);
+            }
+            fn.bind('click', $numbers.find('.'+defaults.pageItemcls), handler);
+
+            return $numbers;
+        },
         createNumber: function(num, activeNum) {
-            var $el = $("<li class=\"page\">" + num + "</li>");  
-            if (num == activeNum) $el.addClass("active");
+            var $el = $("<li>" + num + "</li>");
+            if (!isNaN(Number(num))) $el.addClass(defaults.pageItemcls);
+            if (num == activeNum) $el.addClass(defaults.activecls);
             return $el;
         },
-    };
+        createInput: function($parent) {
+            // return input for paging
+            var $input = $("<input type=\"text\">");
+            $input.addClass(defaults.inputcls);
 
+            var handler = function() {
+                // var
+                var active = $(this).parent().find('.'+defaults.activecls).text();
+                var value = $(this).val();
+                var valid = (!isNaN(Number(value)));
+                // must be a number, must not be current number
+                if (valid && active !== value) {
+                    fn.goto($parent, Number(value));
+                }
+            };
+
+            fn.bind('change', $input, handler);
+
+            return $input;
+        },
+        // init
+        init: function() {
+            // Check & throw/warn
+            var $parent = this.parent;
+            var options = this.options;
+
+            if ($parent.hasClass(defaults.parentcls)) {
+                console.warn("jq-paginator: This element has already been instanced, or contains a reserved class, aborting.");
+                return;
+            }
+            if (!options.data) 
+                throw Error("jq-paginator: Cannot operate without data array or function!");
+            if (!options.render)
+                throw Error("jq-paginator: A render function is required to display data selection!");
+            if (!options.showButtons && !options.showNumbers && !options.showInput)
+                throw Error("jq-paginator: At least 1 display should be allowed for pagination! Use 1 or more of 'showNumbers', 'showInput' or 'showButtons' as true.");
+
+            // Build
+            this.buildPaginator();
+
+            // Get first page
+            fn.goto($parent, 1);
+        },
+        // interaction
+        goto: function($parent, page) {
+            console.log("goto", page);
+            if (!page) page = 1;
+            if (!isNaN(page)) page = Number(page);
+            else throw Error("jqpaginator: Page number to go to is not a number!");
+            // var
+            var max;
+
+            $parent.find('.'+defaults.pageItemcls).each(function() {
+                var val = Number($(this).text());
+                if (!isNaN(val) && val > max) max = val;
+            });
+            if (page > 0 && page <= max) {
+                console.log("go");
+            }
+        },
+        reload: function($parent) {},
+        destroy: function($parent) {},
+    };
     var opt = {  // Default options
         data: null,
         itemsPerPage: 10,
@@ -52,12 +242,42 @@
         showInput: true,
         numberMargin: 2,
         render: null,
-        beforePaging: null,
-        afterPaging: null,
     };
 
-    $.fn.paginator = function(options) {
-        
+
+    function Paginator(options) {
+        // Object so as to keep track of important data.
+        this.options = options;
+        this.parent = parent;
+
+        this.init();
+    }
+    Object.defineProperty(Paginator, 'constructor', {value: Paginator, enumerable: false, writable: true});
+    Object.assign(Paginator.prototype, fn);
+
+    var instances = {};
+
+    $.fn.jqpaginator = function(options, val) {
+        if (typeof options === "object") {
+            // creation
+            return this.each(function() {
+                var eid = 'jqp' + new Date().getTime();
+                instances[eid] = new Paginator($(this), options);
+            });
+        } else {  // WIP
+            // interaction
+            switch(options) {
+                case "destroy":
+                    break;
+                case "reload":
+                    break;
+                case "goto":
+                    fn.goto($parent, val);
+                    break;
+                default:
+                    console.warn("jq-paginator: Unrecognised action, ignoring.");
+            }
+        }
     };
 
 })(jQuery);
@@ -65,58 +285,12 @@
 
 
 // old stuff i had for a thing
-function Paginator(parent, options, runOnInit) {
-    /**
-     * Instantiate a Paginator Object.
-     * 
-     * The Paginator will NOT automatically get the first page,
-     * call `.load()` to start and get the first page.
-     * 
-     * `parent` is a string selector to get an element.
-     * `options` is an object of options.
-     *   `url` String url.
-     *   `totalKey` String key to get the total number of items across all pages in response.
-     *   `dataKey` String key to get data from response.
-     *   `itemsPerPage` Number items per page of results.
-     *   `ajaxData` Object or function returning an object.
-     *   `buttonText` Array of two values, corresponding to each of `next` and `prev` buttons text values.
-     *   `hasNumbers` Bool has numbers to click to page.
-     *   `hasPrevNext` Bool has previous/next buttons.
-     *   `hasInput` Bool has an input to type in.
-     *   `numberMargin` Number of numbers to show surrounding active page.
-     *   `render` Function to use after requesting data, passed response json & `Paginator` Object.
-     *   `beforePaging` Function to call before requesting data, passed `Paginator` object.
-     *   `afterPaging` Function to call after requesting data, passed `Paginator` object.
-     */
-    // check parent
-    if (!this.isStr(parent))
-        throw Error("Parent identifier must be string type.");
-    if ($(parent).length == 0)
-        throw Error("Cannot instantiate pagination on element that doesn't exist.");
+function _Paginator(parent, options, runOnInit) {
     this.parent = parent;
     this.currentPage = 1;
     this.maxPage = 1;
     this.lastKnownTotal = 1;
     this.currentData = null;
-    // options
-    this.options = {};
-    this.options.url = (this.isStr(options.url)) ? options.url : "";
-    this.options.totalKey = (this.isStr(options.totalKey)) ? options.totalKey : "total";
-    this.options.dataKey = (this.isStr(options.dataKey)) ? options.dataKey : "data";
-    this.options.itemsPerPage = (this.isNum(options.itemsPerPage)) ? options.itemsPerPage : 10;
-    this.options.ajaxData = (!this.isUndef(options.ajaxData)) ? options.ajaxData : null;
-    this.options.hasNumbers = (!this.isUndef(options.hasNumbers)) ? !!options.hasNumbers : true;
-    this.options.hasPrevNext = (!this.isUndef(options.hasPrevNext)) ? !!options.hasPrevNext : true;
-    this.options.hasInput = (!this.isUndef(options.hasInput)) ? !!options.hasInput : true;
-    this.options.numberMargin = (this.isNum(options.numberMargin)) ? options.numberMargin : 2;
-    this.options.buttonText = (this.isArr(options.buttonText) && options.buttonText.length == 2) ? options.buttonText : ["<<",">>"];
-    this.options.render = options.render;
-    this.options.beforePaging = options.beforePaging;
-    this.options.afterPaging = options.afterPaging;
-    if (this.options.url === "")
-        throw Error("Cannot have an empty url for request.");
-    if (!this.isFunc(this.options.render))
-        throw Error("Render function must be given to handle output.");
     // setup 
     this.setupBar();
     this.buttonEvents();
@@ -128,7 +302,7 @@ function Paginator(parent, options, runOnInit) {
     else
         this.print("Paginator: Prepared & waiting, use .goto() to load data.");
 }
-Paginator.prototype = Object.assign(Paginator.prototype, {
+_Paginator.prototype = Object.assign(_Paginator.prototype, {
     // Run once setups
     setupBar: function() {
         /**

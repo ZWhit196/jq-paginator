@@ -12,7 +12,34 @@
 
         <script type="text/javascript">
             $(function() {
-                
+                function createData() {
+                    var arr = [];
+                    var i = 0;
+
+                    while (i < 1000) {
+                        arr.push("Item: " + i.toString());
+                        i++;
+                    }
+
+                    return arr;
+                }
+                function renderer(data, done) {
+                    
+                    $.each(data, function(i, v) {
+                        $('#main').append("<p>" + v + "</p>");
+                    });
+
+                    done();
+                };
+
+                $('#target').jqpaginator({
+                    showButtons: true,
+                    showInput: true,
+                    showNumbers: true,
+                    numberMargin: 1,
+                    data: createData(),
+                    render: renderer,
+                });
             });
         </script>
     </head>
@@ -20,6 +47,8 @@
     <body>
         <h1>jqpaginator - jQuery Pagination element plugin.</h1>
 
-                
+        <div id="main"></div>
+
+        <div id="target"></div>
     </body>
 </html>

@@ -1,0 +1,8 @@
+.jqpaginator {
+    position: relative;
+}
+
+.jqpaginator .jqp-wrap {
+    display: block;
+    position: relative;
+}

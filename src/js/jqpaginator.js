@@ -19,10 +19,12 @@
 (function($) {
     
     var fn = {
+        // util
         bind: function(event, element, func) {
             // Binding events
             element.on(event, func);
         },
+        // ajax related
         done: function(dataArray, total) {
             /**
              * Passed to `data` function, and accepts a 
@@ -31,7 +33,7 @@
              * total data items.
              */
         },
-
+        // construction
         getPageNums: function() {},
         buildBar: function() {},
         createNumber: function(num, activeNum) {
@@ -39,7 +41,6 @@
             if (num == activeNum) $el.addClass("active");
             return $el;
         },
-
     };
 
     var opt = {  // Default options
@@ -63,7 +64,7 @@
 
 
 
-// old
+// old stuff i had for a thing
 function Paginator(parent, options, runOnInit) {
     /**
      * Instantiate a Paginator Object.
@@ -87,7 +88,6 @@ function Paginator(parent, options, runOnInit) {
      *   `beforePaging` Function to call before requesting data, passed `Paginator` object.
      *   `afterPaging` Function to call after requesting data, passed `Paginator` object.
      */
-    PXPExpandedUtils.call(this);
     // check parent
     if (!this.isStr(parent))
         throw Error("Parent identifier must be string type.");

@@ -24,3 +24,13 @@ Options can also be one of the following:
 - `"reload"`: Destroys paginator and reinitialises.
 - `"goto"`: Go to a specified page number. (In case you want something custom)
 - `"getPage"`: Get the current page number. (Will only use the first found paginator in selector)
+
+## Events
+
+The paginator has several events that under certain circumstances.
+
+Firstly, `before-paging` is fired on the pagination element when a page is attempted navigation to.
+
+Then, `after-paging` is fired on the pagination element after the render function given is called. (Triggered in the `done` callback.)
+
+Additionally, `destroy-paging` is fired when a pagination element is destroyed via `$('.selector').jqpagination('destroy')`. This can be used to cleanup content generated from render functions.

@@ -15,6 +15,7 @@
 
         afterPagingEvent: 'after-paging',
         beforePagingEvent: 'before-paging',
+        destroyEvent: 'destroy-paging',
     };
     var opt = {  // Default options
         itemsPerPage: 10,
@@ -250,6 +251,8 @@
                 console.warn("jq-paginator: This element has already been instanced, or contains a reserved class, aborting.");
                 return;
             }
+            $parent.addClass(defaults.parentcls);
+
             if (!options.data) 
                 throw Error("jq-paginator: Cannot operate without data array or function!");
             if (!options.render)
@@ -338,8 +341,7 @@
         },
         destroy: function($parent) {
             // remove all elements, return to pre-init state
-            $parent.empty();
-            $parent.removeData('pagination');
+            $parent.empty().removeClass(defaults.parentcls);
         },
     });
 
@@ -360,7 +362,10 @@
                     return this.each(function() {
                         var eid = $(this).data('pagination');
                         instances[eid].destroy($(this));
-                        delete instances[eid];  // Remove ref after
+                        // Remove refs after
+                        delete instances[eid];
+                        $(this).removeData('pagination')
+                        .trigger(defaults.destroyEvent);
                     });
                 case "reload":
                     return this.each(function() {

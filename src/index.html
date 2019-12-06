@@ -12,6 +12,8 @@
 
         <script type="text/javascript">
             $(function() {
+                var itemsPerPage = 3;
+
                 function createData() {
                     var arr = [];
                     var i = 0;
@@ -23,22 +25,50 @@
 
                     return arr;
                 }
-                function renderer(data, done) {
+                function dataFunc(done) {
+                    var data = [];
                     
+                    while (data.length < itemsPerPage) {
+                        var num = Math.floor(Math.random() * 100);
+                        data.push(num);
+                    }
+
+                    var handler = function() {
+                        done(data, 100);
+                    };
+                    setTimeout(handler, 1000);
+                }
+                function renderer(data) {
+                    $('#main').empty();
+
                     $.each(data, function(i, v) {
                         $('#main').append("<p>" + v + "</p>");
                     });
-
-                    done();
                 };
 
-                $('#target').jqpaginator({
-                    showButtons: true,
-                    showInput: true,
-                    showNumbers: true,
-                    numberMargin: 1,
-                    data: createData(),
-                    render: renderer,
+                $("#create").on('click', function() {
+                    $('#target').jqpaginator({
+                        showButtons: true,
+                        showInput: true,
+                        showNumbers: true,
+                        numberMargin: 1,
+                        itemsPerPage: itemsPerPage,
+                        data: createData(),
+                        //data: dataFunc,
+                        render: renderer,
+                    });
+                });
+                $("#getpage").on('click', function() {
+                    alert($('#target').jqpaginator('getPage'));
+                });
+                $("#reload").on('click', function() {
+                    $('#target').jqpaginator('reload');
+                });
+                $("#destroy").on('click', function() {
+                    $('#target').jqpaginator('destroy');
+                });
+                $("#goto").on('click', function() {
+                    $('#target').jqpaginator('goto', 3);
                 });
             });
         </script>
@@ -46,6 +76,14 @@
 
     <body>
         <h1>jqpaginator - jQuery Pagination element plugin.</h1>
+
+        <div>
+            <button id="create">Create</button>
+            <button id="getpage">Get Page</button>
+            <button id="reload">Reload</button>
+            <button id="destroy">Destroy</button>
+            <button id="goto">Go to 3</button>
+        </div>
 
         <div id="main"></div>
 

@@ -294,7 +294,7 @@
                     // should accept done func as arg.
                     this.data(function(data, total) {
                         self.done(data, total, page);
-                    });
+                    }, page);
                 } else {
                     // error, but send the after-paging
                     $parent.trigger(defaults.afterPagingEvent);

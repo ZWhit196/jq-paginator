@@ -36,6 +36,9 @@
         if (!this.options.render) 
             throw Error('jqpaginator: Missing render function!');
 
+        if (!('showNumbers' in this.options)) this.options.showNumbers = opt.showNumbers;
+        if (!('showButtons' in this.options)) this.options.showButtons = opt.showButtons;
+        if (!('showInput' in this.options)) this.options.showInput = opt.showInput;
         // Parent element
         this.$parent = $parent;
 

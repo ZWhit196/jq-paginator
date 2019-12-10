@@ -85,13 +85,14 @@
             return data.slice(start, end);
         },
         // result of data
-        done: function(dataArray, total, page) {
+        done: function(data, total, page) {
             /**
              * If `data` is a function, this is passed to it
              * to trigger the `render` function and `after-paging`
              * event.
-             * Accepts an array of data to render, and a total value
-             * to determine pager range.
+             * Accepts data passed to `render`, and a total value
+             * to determine pager range, along with the current
+             * page number.
              */
             // update elements
             if (this.options.showNumbers) this.updateNumbers(total, page);
@@ -99,7 +100,7 @@
             if (this.options.showInput) 
                 this.$parent.find('.'+defaults.inputcls).val('');
             // run render
-            this.options.render(dataArray);
+            this.options.render(data);
             // trigger after-paging
             this.$parent.trigger(defaults.afterPagingEvent);
         },

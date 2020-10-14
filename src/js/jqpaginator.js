@@ -388,6 +388,14 @@
                     else return null;
 
                     return $chosen.find('.'+defaults.activecls).text();
+                case "instance":
+                    var $chosen;
+                    if (this.length > 1) $chosen = $(this.get(0));
+                    else if (this.length === 1) $chosen = this;
+                    else return null; 
+
+                    var eid = $(this).data('pagination');
+                    return instances[eid];
                 default:
                     console.warn("jq-paginator: Unrecognised action, ignoring.");
             }
